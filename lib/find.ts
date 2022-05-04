@@ -70,6 +70,4 @@ function find(tree, condition) {
     return result;
 }
 
-module.exports = {
-    find: find
-};
+export {find}

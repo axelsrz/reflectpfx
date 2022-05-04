@@ -1,7 +1,7 @@
 
-const utils = require('./utils.js');
-const nary = require('./nary.js');
-const postfix = require('./postfix.js').postfix;
+import * as utils from "./utils";
+import * as nary from "./nary";
+import {postfix} from "./postfix";
 
 function normalizeOperator(original) {
     const lookup = { and: '&&', or: '||', '&&': '&&', '||': '||' };
@@ -9,7 +9,7 @@ function normalizeOperator(original) {
 }
 
 function traverseNonTerminal(node) {
-    var result = {};
+    var result = {left: null, right: null, operator: null};
     if (node.left) {
         result.left = traverse(node.left);
         result.operator = normalizeOperator(node.operator);
@@ -58,9 +58,9 @@ function structuredCondition(parseTree) {
     return nary.makeTree(structuredConditionPostFixNary);
 }
 
-module.exports = {
-    structuredCondition: structuredCondition,
+export {
+    structuredCondition,
 
     // export this for testing
-    makeStructuredConditionTree: makeStructuredConditionTree,
+    makeStructuredConditionTree,
 };

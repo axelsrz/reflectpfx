@@ -47,7 +47,7 @@ function makeTree(naryPostFix) {
     return stack.pop();
 }
 
-module.exports = {
-    makeNaryPostFix: makeNaryPostFix,
-    makeTree: makeTree
+export {
+    makeNaryPostFix,
+    makeTree
 }

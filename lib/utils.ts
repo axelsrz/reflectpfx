@@ -192,6 +192,6 @@ function toString(tree) {
     return buf;
 }
 
-module.exports = {
-    toString: toString
+export {
+    toString
 };

@@ -202,12 +202,12 @@ function prim(get) {
                     return postFix({ type: 'primary', match: 'function', name: name });
                 }
                 else {
-                    const arguments = args(false);
+                    const argumentList = args(false);
                     if (currentToken.type !== 'RP') {
                         throw new Error(') expected');
                     }
                     getToken();
-                    return postFix({ type: 'primary', match: 'function', name: name, args: arguments });
+                    return postFix({ type: 'primary', match: 'function', name: name, args: argumentList });
                 }
             }
             // variable
@@ -225,12 +225,12 @@ function prim(get) {
                     return { type: 'primary', match: 'and', name: name };
                 }
                 else {
-                    var arguments = args(false);
+                    var argumentList = args(false);
                     if (currentToken.type !== 'RP') {
                         throw new Error(') expected');
                     }
                     getToken();
-                    return { type: 'primary', match: 'and', name: name, args: arguments };
+                    return { type: 'primary', match: 'and', name: name, args: argumentList };
                 }
             }
         }
@@ -244,12 +244,12 @@ function prim(get) {
                     return { type: 'primary', match: 'or', name: name };
                 }
                 else {
-                    var arguments = args(false);
+                    var argumentList = args(false);
                     if (currentToken.type !== 'RP') {
                         throw new Error(') expected');
                     }
                     getToken();
-                    return { type: 'primary', match: 'or', name: name, args: arguments };
+                    return { type: 'primary', match: 'or', name: name, args: argumentList };
                 }
             }
         }
@@ -277,12 +277,12 @@ function prim(get) {
                 return postFix({ type: 'primary', match: 'inlineTable' });
             }
             else {
-                const arguments = args(false);
+                const argumentList = args(false);
                 if (currentToken.type !== 'SRP') {
                     throw new Error('] expected');
                 }
                 getToken();
-                return postFix({ type: 'primary', match: 'inlineTable', args: arguments });
+                return postFix({ type: 'primary', match: 'inlineTable', args: argumentList });
             }
         }
         case 'CLP': {
@@ -424,7 +424,7 @@ function checkForUnconsumedTokens() {
     }
 }
 
-function eval(t) {
+function evaluate(t) {
     tokens = t;
     index = 0;
     currentToken = undefined;
@@ -438,13 +438,13 @@ function eval(t) {
 }
 
 function evalNary(t) {
-    binaryTree = eval(t);
-    naryTree = binaryToNary(binaryTree);
+    const binaryTree = evaluate(t);
+    const naryTree = binaryToNary(binaryTree);
     return naryTree;
 }
 
 function extractChildrenNodes(treeNode){
-    result = [];
+    const result = [];
     if (treeNode.child){
         result.push(treeNode.child)
         delete treeNode.child
@@ -478,7 +478,7 @@ function binaryToNary(bNode) {
     return bNode;
 }
 
-module.exports = {
-    eval: eval,
-    evalNary: evalNary
+export {
+    evaluate as eval,
+    evalNary
 };

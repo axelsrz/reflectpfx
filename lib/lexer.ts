@@ -1,5 +1,4 @@
-
-const stringInterpolation = require('./stringInterpolation.js');
+import * as stringInterpolation from "./stringInterpolation";
 
 // like UNIX lex this lexer evaluates an ordered set of regular expressions
 // against the input, unlike UNIX lex it's not executing program fragments
@@ -58,20 +57,20 @@ const keywords = {
 };
 
 function nextToken(s) {
-    let match = { type: 'END' }
+    let match = { token_type: 'END', value: null, index: null }
     for (var tokenType in tokenTypes) {
         const result = tokenTypes[tokenType].exec(s);
         if (result !== null) {
             if (result.index === 0) {
-                match = { type: tokenType, value: result[0] };
+                match = { token_type: tokenType, value: result[0], index: null };
                 break;
             }
         }
     }
-    if (match.type === 'NAME') {
+    if (match.token_type === 'NAME') {
         const keywordType = keywords[match.value.toLowerCase()];
         if (keywordType !== undefined) {
-            match.type = keywordType;
+            match.token_type = keywordType;
         }
     }
     return match;
@@ -81,8 +80,8 @@ function processStringInterpolation(s, token) {
 
     function literal(s) {
         if (s.length > 0) {
-            tokens.push({ type: 'SEGMENT_TEXT_LITERAL', value: s });
-            tokens.push({ type: 'STRING_INTERPOLATION_SEPARATOR', value: ''});
+            tokens.push({ token_type: 'SEGMENT_TEXT_LITERAL', value: s });
+            tokens.push({ token_type: 'STRING_INTERPOLATION_SEPARATOR', value: ''});
         }
     }
 
@@ -91,7 +90,7 @@ function processStringInterpolation(s, token) {
         nestedTokens.pop();
 
         tokens.push(...nestedTokens);
-        tokens.push({ type: 'STRING_INTERPOLATION_SEPARATOR', value: ''});
+        tokens.push({ token_type: 'STRING_INTERPOLATION_SEPARATOR', value: ''});
     }
 
     const tokens = [];
@@ -102,7 +101,7 @@ function processStringInterpolation(s, token) {
         tokens.pop();
     }
 
-    tokens.push({ type: 'END_STRING_INTERPOLATION', value: '' });
+    tokens.push({ token_type: 'END_STRING_INTERPOLATION', value: '' });
 
     return { indexStart: indexStart, tokens: tokens };
 }
@@ -114,14 +113,14 @@ function tokenize(s) {
         const token = nextToken(s.substring(indexStart));
         token.index = indexStart;
 
-        if (token.type === 'BEGIN_STRING_INTERPOLATION') {
+        if (token.token_type === 'BEGIN_STRING_INTERPOLATION') {
             var stringInterpolationResult = processStringInterpolation(s, token);
             indexStart = stringInterpolationResult.indexStart;
             tokens.push(...stringInterpolationResult.tokens);
         }
         else {
             tokens.push(token);
-            if (token.type === 'END') {
+            if (token.token_type === 'END') {
                 break;
             }
             indexStart += token.value.length;
@@ -132,11 +131,11 @@ function tokenize(s) {
 
 function log(tokens) {
     tokens.forEach(function(token) {
-        console.log(`${token.type} ${token.value} ${token.index}`);
+        console.log(`${token.token_type} ${token.value} ${token.index}`);
     });
 }
 
-module.exports = {
-    tokenize: tokenize,
-    log: log
+export {
+    tokenize,
+    log
 };

@@ -65,6 +65,6 @@ function read(s, i, literal, expression) {
     return i;
 }
 
-module.exports = {
-    read: read
+export {
+    read
 }

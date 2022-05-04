@@ -24,6 +24,6 @@ function postfix(tree) {
     return result;
 }
 
-module.exports = {
-    postfix: postfix
+export {
+    postfix
 };
