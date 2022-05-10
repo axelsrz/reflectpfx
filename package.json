@@ -2,7 +2,7 @@
   "name": "reflectpfx",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "mocha"
   },
@@ -10,13 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "awesome-typescript-loader": "^5.2.1",
+    "common-js": "^0.3.8",
     "mocha": "^9.2.2",
     "nanoid": "3.3.1",
     "nanoid-dictionary": "4.3.0",
     "source-map-loader": "^3.0.1",
     "uuid": "~8.3.2"
   },
-  "type": "module",
   "devDependencies": {
     "ts-node": "^10.7.0"
   }
