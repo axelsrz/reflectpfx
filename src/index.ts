@@ -7,6 +7,7 @@ import * as postfix from "./postfix";
 import * as nary from "./nary";
 import {structuredCondition, makeStructuredConditionTree} from "./structuredCondition";
 import {roundtrip} from "../test/testHelper.js";
+import { typedStructuredCondition } from "./typedStructuredCondition";
 
 //var t = lexer.tokenize('7 && 0');
 //var t = lexer.tokenize('f(x, y >= 6)');
@@ -78,6 +79,7 @@ import {roundtrip} from "../test/testHelper.js";
 //var t = lexer.tokenize('$"Hello {"World!"}"');
 //var t = lexer.tokenize('$""');
 //var t = lexer.tokenize('$"! { {a:1,b:2} } !"');
+typedStructuredCondition('a = 1 && (b = 2 || c = 3 || d = 4)')
 var t = lexer.tokenize('$"Hello {  }"');
 //var t = lexer.tokenize('$"{Hello} "');
 

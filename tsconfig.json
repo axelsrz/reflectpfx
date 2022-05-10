@@ -2,7 +2,7 @@
     "compilerOptions": {
       "target": "es2016" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
       "moduleResolution": "node",
-      "module": "CommonJS",
+      "module": "ESNext",
       "resolveJsonModule": true /* Enable importing .json files */,
       "declaration": true /* Generate .d.ts files from TypeScript and JavaScript files in your project. */,
       "outDir": "./lib" /* Specify an output folder for all emitted files. */,
@@ -19,10 +19,14 @@
       "noImplicitThis": true /* Enable error reporting when `this` is given the type `any`. */,
       "noImplicitReturns": true /* Enable error reporting for codepaths that do not explicitly return in a function. */,
       "noFallthroughCasesInSwitch": true /* Enable error reporting for fallthrough cases in switch statements. */,
-      "noImplicitOverride": true /* Ensure overriding members in derived classes are marked with an override modifier. */,
       "allowUnreachableCode": true /* Disable error reporting for unreachable code. */,
       "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-      "composite": true /* Enable constraints that allow a TypeScript project to be used with project references. */
+      "composite": true /* Enable constraints that allow a TypeScript project to be used with project references. */,
+      "sourceMap": true,
     },
-    "include": ["src/**/*.ts", "src/find.ts"]
+    "ts-node": {
+        "esm": true
+    },
+    "lib": ["esnext"],
+    "include": ["src/**/*.ts"]
 }
