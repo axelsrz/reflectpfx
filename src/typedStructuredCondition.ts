@@ -1,5 +1,6 @@
 import { tokenize } from "./lexer";
-import { BooleanConditionBase } from "./generated/types"
+import { BooleanConditionBase, BooleanConditionGroup, makeOrConditionGroup, makeAndConditionGroup, makeBooleanCondition, makeValueExpression } from "./generated/types"
+import { BooleanConditionOperator } from "./generated/enums"
 import { eval } from "./parser";
 import { structuredCondition } from "./structuredCondition";
 
@@ -7,7 +8,7 @@ function typedStructuredCondition(expression: string): BooleanConditionBase {
     let t = tokenize(expression);
     let parseTree = eval(t)
     let structuredConditionTree = structuredCondition(parseTree)
-    return castingTraverse(structuredConditionTree);
+    return structuredConditionTree;
 }
 
 function extractChildrenNodes(treeNode){
@@ -28,21 +29,25 @@ function extractChildrenNodes(treeNode){
     return result
 }
 
-function binaryToNary(bNode, exclusiveOperatorsToFlatten: string[] = null) {
+function binaryToNary(bNode, exclusiveOperatorsToFlatten: string[] = null, removeParenthesis: boolean = false): BooleanConditionBase {
     if (!bNode) return null;
     let leaves = extractChildrenNodes(bNode);
     bNode.children = []
     leaves.forEach(element => {
         if(!element) return;
-        var flatNode = binaryToNary(element);
+        var flatNode = binaryToNary(element, exclusiveOperatorsToFlatten, removeParenthesis);
+        if(!flatNode) return;
         if (operatorsShouldBeFlatten(element.token_type, bNode.token_type, exclusiveOperatorsToFlatten)){
-            bNode.children.push(...flatNode.children);
+            //TODO: This code assumes only condition groups can be flattened, make it more generic.
+            bNode.children.push(...(flatNode as BooleanConditionGroup).conditions);
         }
         else {
             bNode.children.push(flatNode);
         }
     });
-    return bNode;
+
+    let nodeToReturn = (removeParenthesis && bNode.token_type == 'primary' && bNode.match == 'parenthesis' ? bNode.children[0] || null : castNodeToStructuredCondition(bNode))
+    return nodeToReturn;
 }
 
 function operatorsShouldBeFlatten(current_token_type: any, child_token_type: any, exclusiveOperatorsToFlatten: string[]): boolean {
@@ -58,7 +63,23 @@ function operatorsShouldBeFlatten(current_token_type: any, child_token_type: any
 
 
 
-function castingTraverse(parseTree): BooleanConditionBase {
+function castNodeToStructuredCondition(bNode: any) {
+    switch (bNode.token_type){
+        case 'logicalOr':
+            return makeOrConditionGroup({'conditions': bNode.children});
+        case 'logicalAnd':
+            return makeAndConditionGroup({'conditions': bNode.children});
+        case 'equality':
+            let rightValue = makeValueExpression({'literalValue': bNode.children[1]});
+            return makeBooleanCondition({'variable': String(bNode.children[0]), 'operator': BooleanConditionOperator.Equal, value: rightValue})
+        case 'primary':
+            switch (bNode.match){
+                case 'variable':
+                    return bNode.name;
+                case 'number':
+                    return Number(bNode.value);
+            }
+    }
     return null
 }
 

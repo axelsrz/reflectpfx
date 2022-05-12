@@ -7,7 +7,7 @@ import * as postfix from "./postfix";
 import * as nary from "./nary";
 import {structuredCondition, makeStructuredConditionTree} from "./structuredCondition";
 import {roundtrip} from "../test/testHelper.js";
-import { typedStructuredCondition } from "./typedStructuredCondition";
+import { typedStructuredCondition, binaryToNary } from "./typedStructuredCondition";
 
 //var t = lexer.tokenize('7 && 0');
 //var t = lexer.tokenize('f(x, y >= 6)');
@@ -79,13 +79,15 @@ import { typedStructuredCondition } from "./typedStructuredCondition";
 //var t = lexer.tokenize('$"Hello {"World!"}"');
 //var t = lexer.tokenize('$""');
 //var t = lexer.tokenize('$"! { {a:1,b:2} } !"');
-typedStructuredCondition('a = 1 && (b = 2 || c = 3 || d = 4)')
-var t = lexer.tokenize('$"Hello {  }"');
+//typedStructuredCondition('a = 1 && (b = 2 || c = 3 || d = 4)')
+var t = lexer.tokenize('a = 1 && (b = 2 || c = 3 || d = 4 && e = 5)');
 //var t = lexer.tokenize('$"{Hello} "');
 
 t.forEach(function(token) { console.log(`${token.type} ${token.value}`); });
 
 var parseTree = parser.eval(t);
+
+//let structCondition = binaryToNary(parseTree, ['logicalAnd', 'logicalOr'], true);
 
 if (parseTree === undefined) {
     throw new Error('eval returned undefined');
