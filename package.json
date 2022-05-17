@@ -1,11 +1,11 @@
 {
-  "name": "reflectpfx",
+  "name": "@ms/reflextpfx",
   "version": "1.0.0",
-  "description": "",
+  "description": "Pure JS implementation of PowerFx parser",
   "main": "index.js",
   "scripts": {
     "test": "mocha"
   },
-  "author": "",
+  "author": "axel.suarez@microsoft.com",
   "license": "ISC"
 }
