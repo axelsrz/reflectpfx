@@ -80,14 +80,16 @@ import { typedStructuredCondition, binaryToNary } from "./typedStructuredConditi
 //var t = lexer.tokenize('$""');
 //var t = lexer.tokenize('$"! { {a:1,b:2} } !"');
 //typedStructuredCondition('a = 1 && (b = 2 || c = 3 || d = 4)')
-var t = lexer.tokenize('a = 1 && (b = 2 || c = 3 || d = 4 && e = 5)');
+//var t = lexer.tokenize('a = 1 && (b = 2 || c = 3 || d = 4 && e = 5)');
+var t = lexer.tokenize("Topic.A = 5");
 //var t = lexer.tokenize('$"{Hello} "');
 
-t.forEach(function(token) { console.log(`${token.type} ${token.value}`); });
+//t.forEach(function(token) { console.log(`${token.type} ${token.value}`); });
 
 var parseTree = parser.eval(t);
 
 //let structCondition = binaryToNary(parseTree, ['logicalAnd', 'logicalOr'], true);
+let structCondition = typedStructuredCondition('Topic.A = 5.5');
 
 if (parseTree === undefined) {
     throw new Error('eval returned undefined');
