@@ -108,3 +108,7 @@ console.log(utils.toString(parseTree));
 //console.log(JSON.stringify(structuredConditionTree, null, 2));
 //console.log(r);
 
+export {
+    typedStructuredCondition
+}
+
