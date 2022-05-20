@@ -41,7 +41,7 @@ const tokenTypes = {
     DISAMBIGUATION: /\@/,
     BEGIN_STRING_INTERPOLATION: /\$"/,
     TEXT_LITERAL: /"{1}([^"]|"{2})*"{1}/,
-    NAME: /[a-zA-Z][a-zA-Z0-9]*/,
+    NAME: /'[^']*'|[_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}][_\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\p{Nd}\p{Pc}\p{Mn}\p{Cf}]*/u,
     INVALID: /./
 };
 

@@ -1,8 +1,9 @@
 import { tokenize } from "./lexer";
-import { BooleanConditionBase, BooleanConditionGroup, makeOrConditionGroup, makeAndConditionGroup, makeBooleanCondition, makeValueExpression } from "./generated/types"
+import { BooleanConditionBase, BooleanCondition, BooleanConditionGroup, makeOrConditionGroup, makeAndConditionGroup, makeBooleanCondition, makeValueExpression, ValueExpression } from "./generated/types"
 import { BooleanConditionOperator } from "./generated/enums"
 import { eval } from "./parser";
 import { BotElementKind } from "./generated/kinds";
+import { isBooleanCondition, isBooleanConditionGroup, isValueExpression } from "./generated/type-guards";
 
 class StructuredConditionParsingError extends Error {
     constructor(message) {
@@ -11,7 +12,7 @@ class StructuredConditionParsingError extends Error {
     }
 }
 
-function typedStructuredCondition(expression: string): BooleanConditionBase {
+function typedStructuredCondition(expression: string): BooleanConditionGroup {
     let t = tokenize(expression);
     let parseTree = eval(t)
     let result = null;
@@ -30,6 +31,90 @@ function typedStructuredCondition(expression: string): BooleanConditionBase {
     }
     
     return result;
+}
+
+function structuredConditionToExpression(condition: BooleanConditionGroup): string {
+    return stringifyConditionGroup(condition, false);
+}
+
+function expressionToString(expression: any, parentIsAnd: boolean = false): string {
+    switch (typeof(expression)){
+        case "number":
+        case "boolean":
+            return String(expression) + " ";
+        case "string":
+            return expression + " ";
+        case "object":
+            if (isBooleanConditionGroup(expression)){
+                return stringifyConditionGroup(expression, parentIsAnd);
+            }
+            if (isValueExpression(expression)){
+                return stringifyValueExpression(expression);
+            }
+            if (isBooleanCondition(expression)){
+                return stringifyCondition(expression);
+            }
+    }
+    throw new StructuredConditionParsingError("Expression type not recognized");
+}
+
+function stringifyValueExpression(valueExpression: ValueExpression): string {
+    const result = valueExpression.expressionText || valueExpression.variableReference || String(valueExpression.literalValue);
+
+    return result + " ";
+}
+
+function stringifyCondition(condition: BooleanCondition): string {
+    let operator = "";
+    switch (condition.operator) {
+        case BooleanConditionOperator.Equal:
+            operator = "= ";
+            break;
+        case BooleanConditionOperator.NotEqual:
+            operator = "<> ";
+            break;
+        case BooleanConditionOperator.Greater:
+            operator = "< ";
+            break;
+        case BooleanConditionOperator.GreaterEqual:
+            operator = "<= ";
+            break;
+        case BooleanConditionOperator.Less:
+            operator = "> ";
+            break;
+        case BooleanConditionOperator.LessEqual:
+            operator = ">= ";
+            break;
+    }
+    return twoArguments(operator, condition.variable, condition.value);
+}
+
+function stringifyConditionGroup(conditionGroup: BooleanConditionGroup, parentIsAnd: boolean): string {
+    let result = "";
+    const isAnd = conditionGroup.$kind == BotElementKind.AndConditionGroup;
+    const insertParenthesis = parentIsAnd && !isAnd;
+    if(conditionGroup.conditions.length == 1){
+        return expressionToString(conditionGroup.conditions[0]);
+    }
+
+    if (insertParenthesis){
+        result += "( ";
+    }
+    conditionGroup.conditions.forEach((condition, index) => {
+        result += expressionToString(condition, isAnd);
+        if (index != conditionGroup.conditions.length - 1){
+            result += isAnd ? "&& " : "|| "
+        }
+    });
+    if (insertParenthesis){
+        result += ") ";
+    }
+
+    return result;
+}
+
+function twoArguments(operator: string, left, right): string {
+    return expressionToString(left) + operator + expressionToString(right);
 }
 
 function extractChildrenNodes(treeNode){
@@ -114,6 +199,8 @@ function castNodeToStructuredCondition(bNode: any) {
             return
         case 'primary':
             switch (bNode.match){
+                case 'logical_literal':
+                    return bNode.value;
                 case 'variable':
                     return bNode.name;
                 case 'number':
@@ -125,6 +212,7 @@ function castNodeToStructuredCondition(bNode: any) {
 
 
 export{
+    structuredConditionToExpression,
     typedStructuredCondition,
     binaryToNary
 }
