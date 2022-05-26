@@ -2,8 +2,8 @@
 // "The C++ Programming Language Third Edition" section 6.1.1 page 108.
 // The operator precedence here, where it corresponds, follow that described on page 120 of the same book.
 
-import { isAndConditionGroup, isBooleanConditionGroup, isValueExpression } from "./generated/type-guards";
-import { BooleanConditionBase, BooleanCondition, BooleanConditionGroup, makeOrConditionGroup, makeAndConditionGroup, makeBooleanCondition, makeValueExpression, ValueExpression } from "./generated/types"
+import { isAndConditionGroup, isBooleanCondition, isBooleanConditionGroup, isBotElement, isValueExpression } from "./generated/type-guards";
+import { BooleanConditionBase, BooleanCondition, BooleanConditionGroup, makeOrConditionGroup, makeAndConditionGroup, makeBooleanCondition, makeValueExpression, ValueExpression, BotElement } from "./generated/types"
 import { BooleanConditionOperator } from "./generated/enums"
 import { structuredConditionToExpression } from "./typedStructuredCondition"
 
@@ -22,7 +22,7 @@ function root(get) {
     return logicalOr(get);
 }
 
-function logicalOr(get): BooleanConditionGroup {
+function logicalOr(get) {
     let child = logicalAnd(get);
     let result = makeOrConditionGroup({'conditions': []});
     if (currentToken.token_type == 'LOGICAL_OR' || currentToken.token_type == 'OR') {
@@ -40,7 +40,7 @@ function logicalOr(get): BooleanConditionGroup {
     return result;
 }
 
-function logicalAnd(get): BooleanConditionBase {
+function logicalAnd(get) {
     let child = equality(get);
     let result = makeAndConditionGroup({'conditions': []});
     if (currentToken.token_type == 'LOGICAL_AND' || currentToken.token_type == 'AND') {
@@ -71,16 +71,16 @@ function equality(get) {
             return left
         }
     }
-
-    if (left.token_type != "variable") {
-        throw new Error('Left side of the comparison is not a variable');
-    }
-    let rightValue = comparison(true)
-    if(!isValueExpression(rightValue)) {
-        throw new Error('Right side of the comparison is not an expression');
-    }
     
-    return makeBooleanCondition({'variable': left.name, 'operator': equalityOperator, value: rightValue});
+    if (isValueExpression(left) && left.variableReference ) { 
+        let rightValue = comparison(true)
+        if(!isValueExpression(rightValue as ValueExpression)) {
+            throw new Error('Right side of the comparison is not an expression');
+        }
+        
+        return makeBooleanCondition({'variable': left.variableReference, 'operator': equalityOperator, value: rightValue});
+    }
+    throw new Error('Left side of the comparison is not a variable');
 }
 
 function comparison(get) {
@@ -109,15 +109,16 @@ function comparison(get) {
         }
     }
     
-    if (isValueExpression(left)  ) {
-        throw new Error('Left side of the comparison is not a variable');
-    }
-    let rightValue = membership(true)
-    if(!isValueExpression(rightValue)) {
-        throw new Error('Right side of the comparison is not an expression');
+    if (isValueExpression(left) && left.variableReference ) {
+        let rightValue = membership(true);
+        if(!isValueExpression(rightValue)) {
+            throw new Error('Right side of the comparison is not an expression');
+        }
+
+        return makeBooleanCondition({'variable': left.variableReference, 'operator': comparisonOperator, value: rightValue});
     }
 
-    return makeBooleanCondition({'variable': left., 'operator': comparisonOperator, value: rightValue});
+    throw new Error('Left side of the comparison is not a variable');
 }
 
 function membership(get) {
@@ -138,6 +139,10 @@ function membership(get) {
         }
     }
     
+    if (isBooleanConditionGroup(left as BotElement)){
+        return left;
+    }
+
     if (!left.variableReference) {
         throw new Error('Left side of the comparison is not a variable');
     }
@@ -167,7 +172,7 @@ function expr(get) {
             }
             default: {
                 if (isToken(left)) {
-                    if (left.string_repr == 'variable') {
+                    if (left.token_type == 'variable') {
                         return makeValueExpression({'variableReference': left.string_repr});
                     }
                     return makeValueExpression({'expressionText': left.string_repr})
@@ -175,7 +180,7 @@ function expr(get) {
                 if (typeof left === 'boolean' || typeof left === 'number' || typeof left === 'string' ){
                     return makeValueExpression({'literalValue': left});
                 }
-                throw new Error("Expecting expression and received unrecognized object");
+                return left
             }
         }
     }
@@ -194,7 +199,7 @@ function term(get) {
                 break;
             }
             case 'DOT': {
-                left = { token_type: 'expression', string_repr: toStringHelper(left) + ' . ' + toStringHelper(prim(true)) };
+                left = { token_type: 'variable', string_repr: toStringHelper(left) + '.' + toStringHelper(prim(true)) };
                 break;
             }
             default: {
@@ -393,11 +398,11 @@ function postFix(primary) {
 }
 
 function args(get) {
-    let argList = structuredConditionToExpression(root(get));
+    let argList = structuredConditionToExpression(root(get)).trim();
     for (;;) {
         switch (currentToken.token_type) {
             case 'COMMA': {
-                argList += structuredConditionToExpression(root(true));
+                argList += ", " + structuredConditionToExpression(root(true)).trim;
                 break;
             }
             default: {
@@ -417,7 +422,7 @@ function records(get) {
     if (currentToken.token_type !== 'COLON') {
         throw new Error(': expected in record');
     }
-    let left = { token_type: 'record', name: name, right: root(true) };
+    let left = { token_type: 'record', left: undefined, name: name, right: root(true) };
     for (;;) {
         switch (currentToken.token_type) {
             case 'COMMA': {
@@ -446,7 +451,7 @@ function stringInterpolation() {
     if (currentToken.token_type === 'END_STRING_INTERPOLATION') {
         return undefined;
     }
-    let left = { token_type: 'stringInterpolation', right: root(false) };
+    let left = { token_type: 'stringInterpolation', left: undefined, right: root(false) };
     for (;;) {
         switch (currentToken.token_type) {
             case 'STRING_INTERPOLATION_SEPARATOR': {

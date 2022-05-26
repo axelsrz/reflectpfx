@@ -38,6 +38,9 @@ function structuredConditionToExpression(condition: BooleanConditionGroup): stri
 }
 
 function expressionToString(expression: any, parentIsAnd: boolean = false): string {
+    if (expression == null) {
+        return "";
+    }
     switch (typeof(expression)){
         case "number":
         case "boolean":
