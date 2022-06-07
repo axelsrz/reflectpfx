@@ -210,7 +210,9 @@ function term(get) {
 }
 
 function prim(get) {
+    let previousToken = null;
     if (get) {
+        previousToken = currentToken;
         getToken();
     }
     switch (currentToken.token_type) {
@@ -276,7 +278,7 @@ function prim(get) {
             const name = currentToken.value;            
             getToken();
             if (currentToken.token_type === 'LP') {
-                throw new Error("Scenario AND() currently not suported")
+                throw new Error("Scenario AND() currently not supported")
                 /*
                 getToken();
                 if (currentToken.token_type === 'RP') {
@@ -299,7 +301,7 @@ function prim(get) {
             const name = currentToken.value;
             getToken();
             if (currentToken.token_type === 'LP') {
-                throw new Error("Scenario OR() currently not suported")
+                throw new Error("Scenario OR() currently not supported")
                 /*
                 getToken();
                 if (currentToken.token_type === 'RP') {
@@ -371,6 +373,22 @@ function prim(get) {
             }
         }
         */
+        case 'EQUAL': {
+            if (previousToken === null) {
+                let rightValue = comparison(true)
+                if(!isValueExpression(rightValue as ValueExpression)) {
+                    throw new Error('Right side of the comparison is not an expression');
+                }
+                return makeBooleanCondition({'variable': '', 'operator': BooleanConditionOperator.Equal, value: rightValue});
+            }
+            throw new Error(`primary expected, received '${currentToken.token_type}'`);
+        }
+        case 'END': {
+            if (previousToken && previousToken.token_type === 'EQUAL'){
+                return makeValueExpression({'literalValue': ""}); 
+            }
+            throw new Error(`primary expected, received '${currentToken.token_type}'`);
+        }
         case 'INVALID': {
             throw new Error(`invalid input token received '${currentToken.value}'`);
         }
@@ -505,7 +523,7 @@ function evaluate(t) {
     currentToken = undefined;
     getToken();
     if (currentToken && currentToken.token_type === 'END') {
-        return undefined;
+        return makeAndConditionGroup({'conditions': []});
     }
     const v = root(false);
     checkForUnconsumedTokens();

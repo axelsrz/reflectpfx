@@ -94,6 +94,9 @@ function stringifyCondition(condition: BooleanCondition): string {
 
 function stringifyConditionGroup(conditionGroup: BooleanConditionGroup, parentIsAnd: boolean): string {
     let result = "";
+    if (typeof conditionGroup === 'undefined' || conditionGroup === null || conditionGroup.conditions.length == 0) {
+        return result;
+    }
     const isAnd = conditionGroup.$kind == BotElementKind.AndConditionGroup;
     const insertParenthesis = parentIsAnd && !isAnd;
     if(conditionGroup.conditions.length == 1){
@@ -113,7 +116,7 @@ function stringifyConditionGroup(conditionGroup: BooleanConditionGroup, parentIs
         result += ") ";
     }
 
-    return result;
+    return result.trim();
 }
 
 function twoArguments(operator: string, left, right): string {
