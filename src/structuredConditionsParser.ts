@@ -2,6 +2,7 @@
 // "The C++ Programming Language Third Edition" section 6.1.1 page 108.
 // The operator precedence here, where it corresponds, follow that described on page 120 of the same book.
 
+import { tokenize } from "./lexer";
 import { isAndConditionGroup, isBooleanCondition, isBooleanConditionGroup, isBotElement, isValueExpression } from "./generated/type-guards";
 import { BooleanConditionBase, BooleanCondition, BooleanConditionGroup, makeOrConditionGroup, makeAndConditionGroup, makeBooleanCondition, makeValueExpression, ValueExpression, BotElement } from "./generated/types"
 import { BooleanConditionOperator } from "./generated/enums"
@@ -530,6 +531,13 @@ function evaluate(t) {
     return v;
 }
 
+function expressionToStructuredCondition(expression: string): BooleanConditionGroup{
+    let t = tokenize(expression);
+    let parseTree = evaluate(t)
+    return parseTree
+}
+
 export {
-    evaluate as eval
+    evaluate as eval,
+    expressionToStructuredCondition
 };
