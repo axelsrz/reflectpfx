@@ -227,22 +227,6 @@ function prim(get) {
             getToken();
             return String(v);
         }
-        /*
-        case 'SEGMENT_TEXT_LITERAL': {
-            const v = currentToken.value;
-            getToken();
-            return { token_type: 'primary', match: 'segment_text_literal', value: v };
-        }
-        case 'BEGIN_STRING_INTERPOLATION': {
-            const child = stringInterpolation();
-            getToken();
-            return { token_type: 'primary', match: 'string_interpolation', child: child };
-        }
-        case 'END_STRING_INTERPOLATION': {
-             getToken();
-             return { token_type: 'primary', match: 'segment_empty_expression' };
-        }
-        */
         case 'LOGICAL_LITERAL': {
             const v = currentToken.value.toLowerCase();
             getToken();
@@ -256,7 +240,6 @@ function prim(get) {
                 getToken();
                 if (currentToken.token_type === 'RP') {
                     getToken();
-                    //return postFix({ token_type: 'primary', match: 'function', function_text: name });
                     return { token_type: 'function', string_repr: name }
                 }
                 else {
@@ -265,70 +248,50 @@ function prim(get) {
                         throw new Error(') expected');
                     }
                     getToken();
-                    //return postFix({ token_type: 'primary', match: 'function', function_text: name + `(${argumentList})` });
                     return { token_type: 'function', string_repr: `${name}(${argumentList})` };
                 }
             }
             // variable
             else {
-                //return postFix({ token_type: 'primary', match: 'variable', name: name });
                 return { token_type: 'variable', string_repr: name };
             }
         }
-        case 'AND': {
-            const name = currentToken.value;            
-            getToken();
-            if (currentToken.token_type === 'LP') {
-                throw new Error("Scenario AND() currently not supported")
-                /*
-                getToken();
-                if (currentToken.token_type === 'RP') {
-                    getToken();
-                    return { token_type: 'primary', match: 'and', name: name };
-                }
-                else {
-                    var argumentList = args(false);
-                    if (currentToken.token_type !== 'RP') {
-                        throw new Error(') expected');
-                    }
-                    getToken();
-                    return { token_type: 'primary', match: 'and', name: name, args: argumentList };
-                }
-                */
-            }
-            break;
-        }
-        case 'OR': {
-            const name = currentToken.value;
-            getToken();
-            if (currentToken.token_type === 'LP') {
-                throw new Error("Scenario OR() currently not supported")
-                /*
-                getToken();
-                if (currentToken.token_type === 'RP') {
-                    getToken();
-                    return { token_type: 'primary', match: 'or', name: name };
-                }
-                else {
-                    var argumentList = args(false);
-                    if (currentToken.token_type !== 'RP') {
-                        throw new Error(') expected');
-                    }
-                    getToken();
-                    return { token_type: 'primary', match: 'or', name: name, args: argumentList };
-                }
-                */
-            }
-            break
-        }
         // TODO: Support 'not' 'bang' 'minus'
-        /*
-        case 'NOT': {
-            return { token_type: 'primary', match: 'not', child: prim(true) };
-        }
+        case 'NOT':
         case 'BANG': {
-            return { token_type: 'primary', match: 'bang', child: prim(true) };
+            const initialType = currentToken.token_type;
+            if (initialType === 'NOT') {
+                getToken();
+                // function
+                if (currentToken.token_type !== 'LP') {
+                    throw new Error(`LP expected, received '${currentToken.token_type}'`);
+                }
+            }
+            getToken();
+            // function
+            if (currentToken.token_type === 'LP') {
+                getToken();
+                if (currentToken.token_type === 'NAME') {
+                    let result = null;
+                    switch (currentToken.value) {
+                        case 'IsBlank':
+                        case 'IsEmpty': {
+
+                            if (initialType === 'NOT' || initialType === 'BANG') {
+                                result = makeBooleanCondition({'variable': '', 'operator': BooleanConditionOperator.Equal})
+                            } 
+                        }
+                        default: {
+
+                        }
+                    }
+                }
+                throw new Error(`NAME expected, received '${currentToken.token_type}'`);
+            }
+
+            throw new Error(`NAME expected, received '${currentToken.token_type}'`);
         }
+        /*
         case 'MINUS': {
             return { token_type: 'primary', match: 'unaryMinus', child: prim(true) };
         }
@@ -339,41 +302,8 @@ function prim(get) {
                 throw new Error(') expected');
             }
             getToken();
-            // return postFix({ token_type: 'primary', match: 'parenthesis', child: e });
             return e
         }
-        /*
-        case 'SLP': {
-            getToken();
-            if (currentToken.token_type === 'SRP') {
-                getToken();
-                return postFix({ token_type: 'primary', match: 'inlineTable' });
-            }
-            else {
-                const argumentList = args(false);
-                if (currentToken.token_type !== 'SRP') {
-                    throw new Error('] expected');
-                }
-                getToken();
-                return postFix({ token_type: 'primary', match: 'inlineTable', args: argumentList });
-            }
-        }
-        case 'CLP': {
-            getToken();
-            if (currentToken.token_type === 'CRP') {
-                getToken();
-                return { token_type: 'primary', match: 'inlineRecord' };
-            }
-            else {
-                const r = records(false);
-                if (currentToken.token_type !== 'CRP') {
-                    throw new Error('} expected');
-                }
-                getToken();
-                return { token_type: 'primary', match: 'inlineRecord', records: r };
-            }
-        }
-        */
         case 'EQUAL': {
             if (previousToken === null) {
                 let rightValue = comparison(true)
@@ -399,23 +329,6 @@ function prim(get) {
     }
 }
 
-function postFix(primary) {
-    if (currentToken.token_type === 'PERCENT') {
-        getToken();
-        return { token_type: 'primary', match: 'percent', child: primary };
-    }
-    else if (currentToken.token_type === 'AS') {
-        getToken();
-        if (currentToken.token_type !== 'NAME') {
-            throw new Error('name expected following as operator');
-        }
-        const name = currentToken.value;
-        getToken();
-        return { token_type: 'primary', match: 'as', name: name, child: primary };
-    }
-    return primary;
-}
-
 function args(get) {
     let argList = structuredConditionToExpression(root(get)).trim();
     for (;;) {
@@ -431,65 +344,9 @@ function args(get) {
     }
 }
 
-function records(get) {
-    // the structure of this doesn't seem quite right - for example 'get' arg isn't used...
-    if (currentToken.token_type !== 'NAME') {
-        throw new Error('name expected in record');
-    }
-    const name = currentToken.value;
-    getToken();
-    if (currentToken.token_type !== 'COLON') {
-        throw new Error(': expected in record');
-    }
-    let left = { token_type: 'record', left: undefined, name: name, right: root(true) };
-    for (;;) {
-        switch (currentToken.token_type) {
-            case 'COMMA': {
-                getToken();
-                if (currentToken.token_type !== 'NAME') {
-                    throw new Error('name expected in record');
-                }
-                const name = currentToken.value;
-                getToken();
-                if (currentToken.token_type !== 'COLON') {
-                    throw new Error(': expected in record');
-                }
-
-                left = { token_type: 'record', left: left, name: name, right: root(true) };
-                break;
-            }
-            default: {
-                return left;
-            }
-        }
-    }
-}
-
-function stringInterpolation() {
-    getToken();
-    if (currentToken.token_type === 'END_STRING_INTERPOLATION') {
-        return undefined;
-    }
-    let left = { token_type: 'stringInterpolation', left: undefined, right: root(false) };
-    for (;;) {
-        switch (currentToken.token_type) {
-            case 'STRING_INTERPOLATION_SEPARATOR': {
-                left = { token_type: 'stringInterpolation', left: left, right: root(true) };
-                break;
-            }
-            default: {
-                return left;
-            }
-        }
-    }
-}
-
 function toStringHelper(val): string {
     return typeof val === 'object' ? val.string_repr : String(val);
 }
-
-// slightly odd getToken arrangement to plug into the Bjarne Stroustrup code above
-// TODO: make parse tree point to the underlying token
 
 let tokens;
 let index;
@@ -533,8 +390,21 @@ function evaluate(t) {
 
 function expressionToStructuredCondition(expression: string): BooleanConditionGroup{
     let t = tokenize(expression);
-    let parseTree = evaluate(t)
-    return parseTree
+    let parseTree = evaluate(t);
+    //const conditionQueue = [parseTree];
+    //let iterator = null;
+    //do{
+    //    iterator = conditionQueue.shift();
+    //}
+    //while (iterator.conditions) {
+    //    iterator.conditions.forEach((condition) => {
+    //        result += expressionToString(condition, isAnd);
+    //        if (index != conditionGroup.conditions.length - 1){
+    //            result += isAnd ? "&& " : "|| "
+    //        }
+    //    });
+    //}
+    return parseTree;
 }
 
 export {
